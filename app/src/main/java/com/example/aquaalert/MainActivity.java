@@ -1,36 +1,38 @@
 package com.example.aquaalert;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Spinner reminderTimeSpinner;
+    private Spinner intervalSpinner;
     private Button setReminderButton;
+    private Button cancelReminderButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        reminderTimeSpinner = findViewById(R.id.reminder_time_spinner);
+        intervalSpinner = findViewById(R.id.reminder_time_spinner);
         setReminderButton = findViewById(R.id.set_reminder_button);
+        cancelReminderButton = findViewById(R.id.cancel_reminder_button);
 
-        // TIRAMISU == Android 13
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -40,45 +42,88 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        setReminderButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setNotification();
-            }
+        requestBatteryUnrestricted(this);
+
+        setReminderButton.setOnClickListener(view -> {
+            int selectedInterval = getSelectedInterval();
+            setRepeatingNotification(selectedInterval);
         });
+
+        cancelReminderButton.setOnClickListener(view -> stopNotifications());
+
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission granted for notifications!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Permission denied for notifications!", Toast.LENGTH_SHORT).show();
-            }
+    private int getSelectedInterval() {
+        String selectedItem = intervalSpinner.getSelectedItem().toString();
+        switch (selectedItem) {
+            case "1 minut":
+                return 1;
+            case "5 minute":
+                return 5;
+            case "10 minute":
+                return 10;
+            case "15 minute":
+                return 15;
+            case "30 minute":
+                return 30;
+            case "45 minute":
+                return 45;
+            case "60 minute":
+                return 60;
+            default:
+                return 2;
         }
     }
 
-    private void setNotification() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
-            == PackageManager.PERMISSION_GRANTED) {
-            // O (Oreo) == Android 8
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel channel = new NotificationChannel("channel_id", "Channel Name", NotificationManager.IMPORTANCE_DEFAULT);
-                NotificationManager manager = getSystemService(NotificationManager.class);
-                manager.createNotificationChannel(channel);
-            }
+    public void requestBatteryUnrestricted(Context context) {
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (powerManager == null) return;
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "channel_id")
-                    .setSmallIcon(R.drawable.water_drop_favicon)
-                    .setContentTitle("AquaAlert")
-                    .setContentText("Water time: Refresh, recharge, repeat! \uD83D\uDCA7")
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            notificationManager.notify(1, builder.build());
+        String packageName = context.getPackageName();
+
+        Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        intent.setData(Uri.parse("package:" + packageName));
+
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            context.startActivity(intent);
         } else {
-            Toast.makeText(this, "Permission for notifications has not been granted!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Dispozitivul nu suportă această setare!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void setRepeatingNotification(int intervalMinutes) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, NotificationReceiver.class);
+
+        intent.putExtra("intervalMinutes", intervalMinutes);
+
+        int requestCode = 1;
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent intentNou = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                startActivity(intentNou);
+                return;
+            }
+        }
+
+        if (alarmManager != null) {
+            long triggerTime = System.currentTimeMillis() + (intervalMinutes * 60 * 1000L);
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+            Toast.makeText(this, "Reminder set for every " + intervalMinutes + " minutes", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void stopNotifications() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, NotificationReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+        }
+
+        pendingIntent.cancel();
     }
 }
