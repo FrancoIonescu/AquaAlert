@@ -46,4 +46,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="20dp" />
 
+    <Button
+        android:id="@+id/cancel_reminder_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_cancel_reminder"
+        app:layout_constraintTop_toBottomOf="@id/set_reminder_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
