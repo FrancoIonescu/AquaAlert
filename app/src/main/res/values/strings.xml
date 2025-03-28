@@ -3,7 +3,7 @@
     <string name="btn_set_reminder">Set Reminder</string>
     <string name="btn_cancel_reminder">Cancel</string>
     <string name="tv_credits_developer">Developed by Franco Ionescu</string>
-    <string name="tv_credits_background_image">Background Image by Pawel Czerwinski</string>
+    <string name="tv_credits_background_image">Background Image by Lionello DelPiccolo</string>
     <string-array name="reminder_time">
         <item>1 minut</item>
         <item>5 minute</item>

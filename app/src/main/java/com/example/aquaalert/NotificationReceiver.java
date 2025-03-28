@@ -53,6 +53,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         long nextTriggerTime = startTime + (nextTriggerMinutes * 60 * 1000);
 
         Intent newIntent = new Intent(context, NotificationReceiver.class);
+        newIntent.putExtra("intervalMinutes", intervalMinutes);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         if (alarmManager != null) {
