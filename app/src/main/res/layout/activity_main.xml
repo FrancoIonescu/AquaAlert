@@ -5,8 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    android:background="@drawable/water_background">
+    android:background="@drawable/water_background"
+    tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/titleText"
@@ -18,45 +18,56 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Spinner
-        android:id="@+id/reminder_time_spinner"
-        style="@style/spinnerStyle"
+    <EditText
+        android:id="@+id/reminder_time_input"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:entries="@array/reminder_time"
-        app:layout_constraintTop_toBottomOf="@+id/titleText"
+        android:hint="@string/enter_interval_minutes"
+        android:inputType="number"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/titleText" />
 
     <Button
         android:id="@+id/set_reminder_button"
+        style="@style/buttonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/buttonStyle"
         android:text="@string/btn_set_reminder"
-        app:layout_constraintTop_toBottomOf="@id/reminder_time_spinner"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/reminder_time_input" />
 
     <Button
         android:id="@+id/cancel_reminder_button"
+        style="@style/buttonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/buttonStyle"
         android:text="@string/btn_cancel_reminder"
-        app:layout_constraintTop_toBottomOf="@id/set_reminder_button"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/set_reminder_button" />
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="300dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="20dp"
+        android:progressTint="@color/blue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cancel_reminder_button" />
 
     <TextView
         android:id="@+id/tv_credits_for_developer"
+        style="@style/creditsDeveloperTextStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/creditsDeveloperTextStyle"
         android:text="@string/tv_credits_developer"
         app:layout_constraintBottom_toTopOf="@id/tv_credits_for_background_image"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tv_credits_for_background_image"
@@ -65,7 +76,7 @@
         android:layout_height="wrap_content"
         android:text="@string/tv_credits_background_image"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

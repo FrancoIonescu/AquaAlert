@@ -11,11 +11,13 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
-import android.widget.ArrayAdapter;
+
 import android.widget.Button;
-import android.widget.Spinner;
+import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,16 +26,23 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Spinner intervalSpinner;
+    private EditText intervalEditText;
+    private ProgressBar progressBar;
+    private Handler handler;
+    private Runnable progressRunnable;
+    private long intervalMillis;
+    private long startTime;
+    private boolean isRunning = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        intervalSpinner = findViewById(R.id.reminder_time_spinner);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_item, getResources().getStringArray(R.array.reminder_time));
-        intervalSpinner.setAdapter(adapter);
+        intervalEditText = findViewById(R.id.reminder_time_input);
+        progressBar = findViewById(R.id.progress_bar);
+        handler = new Handler();
         Button setReminderButton = findViewById(R.id.set_reminder_button);
         Button cancelReminderButton = findViewById(R.id.cancel_reminder_button);
 
@@ -42,33 +51,29 @@ public class MainActivity extends AppCompatActivity {
 
         setReminderButton.setOnClickListener(view -> {
             int selectedInterval = getSelectedInterval();
-            createNotificationChannel();
-            setRepeatingNotification(selectedInterval);
+            if (selectedInterval > 0) {
+                createNotificationChannel();
+                setRepeatingNotification(selectedInterval);
+                intervalMillis = selectedInterval * 60 * 1000L;
+            } else {
+                Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
+            }
         });
 
         cancelReminderButton.setOnClickListener(view -> stopNotifications());
     }
 
     private int getSelectedInterval() {
-        String selectedItem = intervalSpinner.getSelectedItem().toString();
-        switch (selectedItem) {
-            case "1 minut":
-                return 1;
-            case "5 minute":
-                return 5;
-            case "10 minute":
-                return 10;
-            case "15 minute":
-                return 15;
-            case "30 minute":
-                return 30;
-            case "45 minute":
-                return 45;
-            case "60 minute":
-                return 60;
-            default:
-                return 2;
+        String input = intervalEditText.getText().toString().trim();
+        if (!input.isEmpty()) {
+            try {
+                int interval = Integer.parseInt(input);
+                return Math.max(interval, 0);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
+        return 0;
     }
 
     public void checkPermissionForNotifications() {
@@ -133,8 +138,32 @@ public class MainActivity extends AppCompatActivity {
 
             long triggerTime = System.currentTimeMillis() + (intervalMinutes * 60 * 1000L);
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+            startProgressLoop();
             Toast.makeText(this, "Reminder set for every " + intervalMinutes + (intervalMinutes == 1 ? " minute" : " minutes"), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void startProgressLoop() {
+        if (isRunning) return;
+        isRunning = true;
+
+        progressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                int progress = (int) ((elapsedTime * 100) / intervalMillis);
+                progressBar.setProgress(progress);
+
+                if (elapsedTime >= intervalMillis) {
+                    startTime = System.currentTimeMillis();
+                    progressBar.setProgress(0);
+                }
+
+                handler.postDelayed(this, 1000);
+            }
+        };
+
+        handler.post(progressRunnable);
     }
 
     private void stopNotifications() {
@@ -147,6 +176,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         pendingIntent.cancel();
+        handler.removeCallbacks(progressRunnable);
+        progressBar.setProgress(0);
+        isRunning = false;
+        startTime = 0;
         Toast.makeText(this, "Reminder stopped", Toast.LENGTH_SHORT).show();
     }
 }

@@ -2,15 +2,7 @@
     <string name="app_name">AquaAlert</string>
     <string name="btn_set_reminder">Set Reminder</string>
     <string name="btn_cancel_reminder">Cancel</string>
+    <string name="enter_interval_minutes">Enter interval in minutes</string>
     <string name="tv_credits_developer">Developed by Franco Ionescu</string>
     <string name="tv_credits_background_image">Background Image by Lionello DelPiccolo</string>
-    <string-array name="reminder_time">
-        <item>1 minut</item>
-        <item>5 minute</item>
-        <item>10 minute</item>
-        <item>15 minute</item>
-        <item>30 minute</item>
-        <item>45 minute</item>
-        <item>60 minute</item>
-    </string-array>
 </resources>
